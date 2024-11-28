@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 from mininet.topo import Topo
 from mininet.net import Mininet
 from mininet.node import RemoteController
@@ -46,6 +49,16 @@ def run():
     topo = CustomTopo()
     net = Mininet(topo=topo, controller=lambda name: RemoteController(name, ip='127.0.0.1', port=6633))
     net.start()
+
+    h2 = net.get('h2')
+    h2.popen('iperf -s &')
+
+
+    h1 = net.get('h1')
+    h1.popen('iperf -c {} -t 0 -i 1 &'.format(h2.IP()))
+
+    print("Running iperf test between h1 and h2...")
+    
     CLI(net)
     net.stop()
 
