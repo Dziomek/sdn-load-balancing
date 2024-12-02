@@ -23,5 +23,5 @@ There is a configuration in `topology.py` responsible for communication with rem
 To run POX controller to enable topology to communicate with it, use following command:
 
 ```
-pox.py forwarding.l2_learning
+./pox.py forwarding.l2_learning openflow.spanning_tree --no-flood --hold-down openflow.discovery host_tracker info.packet_dump
 ```
