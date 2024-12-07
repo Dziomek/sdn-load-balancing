@@ -6,6 +6,7 @@ from mininet.net import Mininet
 from mininet.node import RemoteController
 from mininet.log import setLogLevel
 from mininet.cli import CLI
+import threading
 
 class CustomTopo(Topo):
     def build(self):
@@ -44,20 +45,49 @@ class CustomTopo(Topo):
         self.addLink(s3, s4)
         self.addLink(s2, s5)
         self.addLink(s4, s6)
+        self.addLink(s1, s4)
+        self.addLink(s2, s3)
+
+
+def generate_traffic(host, hosts):
+    hosts = [h for h in hosts if h != host]
+
+    host.cmd('iperf -s &')
+
+    time.sleep(5)
+    
+    while True:
+        traffic_duration = random.randint(1, 15)
+        
+        target_host = random.choice(hosts)
+
+        host.cmd(f'iperf -c {target_host.IP()} -t {traffic_duration}')
+
+        wait_time = random.randint(1, 15)
+        time.sleep(wait_time)
 
 def run():
     topo = CustomTopo()
     net = Mininet(topo=topo, controller=lambda name: RemoteController(name, ip='127.0.0.1', port=6633))
     net.start()
 
-    h2 = net.get('h2')
-    h2.popen('iperf -s &')
+    hosts = []
+    for i in range(1,9):
+        host = net.get('h' + str(i))
+        hosts.append(host)
+
+    for host in hosts:
+        t = threading.Thread(target=generate_traffic, args=(host, hosts))
+        t.setDaemon(True)  # Wątek demoniczny, zakończy się po zakończeniu programu
+        t.start()
+    
+
+    #h2 = net.get('h2')
+    #h2.popen('iperf -s &')
 
 
-    h1 = net.get('h1')
-    h1.popen('iperf -c {} -t 0 -i 1 &'.format(h2.IP()))
-
-    print("Running iperf test between h1 and h2...")
+    #h1 = net.get('h1')
+    #h1.popen('iperf -c {} -t 0 -i 1 &'.format(h2.IP()))
     
     CLI(net)
     net.stop()
