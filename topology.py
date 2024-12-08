@@ -81,7 +81,7 @@ def run():
 
     for host in hosts:
         t = threading.Thread(target=generate_traffic, args=(host, hosts))
-        t.setDaemon(True)  # Wątek demoniczny, zakończy się po zakończeniu programu
+        t.setDaemon(True)
         t.start()
     
 
