@@ -53,7 +53,7 @@ class CustomTopo(Topo):
 def generate_traffic(host, hosts):
     hosts = [h for h in hosts if h != host]
 
-    host.popen('iperf -s &')
+    host.cmd('iperf -s &')
 
     time.sleep(5)
     
@@ -62,7 +62,7 @@ def generate_traffic(host, hosts):
         
         target_host = random.choice(hosts)
 
-        host.popen('iperf -c ' + target_host.IP() + ' -t ' + str(traffic_duration))
+        host.cmd('iperf -c ' + target_host.IP() + ' -t ' + str(traffic_duration) + ' &')
 
         time.sleep(traffic_duration)
 
