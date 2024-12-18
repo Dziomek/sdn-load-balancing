@@ -5,6 +5,11 @@ Topology consists of 6 switches and 8 hosts. Devices are connected as follows:
 
 The script that defines and runs the topology is in the file `topology.py`.
 
+# Algorithm
+
+Load balancing algorithm is the following:
+
+<img src="img/algorithm.png" alt="Topology Diagram" width="400">
 
 ## Running the topology
 
