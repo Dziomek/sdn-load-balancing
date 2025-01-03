@@ -21,15 +21,15 @@ class HashLoadBalancer(object):
             log.info("Non-IPv4 packet received; ignoring")
             return
 
-        # Oblicz hash na podstawie adresu docelowego
-        dst_ip = ip.dstip.toStr()
-        hash_value = int(hashlib.md5(dst_ip.encode()).hexdigest(), 16)
+        # Oblicz hash na podstawie adresu źródłowego
+        src_ip = ip.srcip.toStr()
+        hash_value = int(hashlib.md5(src_ip.encode()).hexdigest(), 16)
         
         # Lista dostępnych portów na przełączniku
         available_ports = [p.port_no for p in self.connection.features.ports if p.port_no != event.port and p.port_no < of.OFPP_MAX]
 
         if not available_ports:
-            log.warning(f"No available ports to forward the packet for {dst_ip}")
+            log.warning(f"No available ports to forward the packet for {src_ip}")
             return
 
         # Wybierz port na podstawie hash
