@@ -9,6 +9,10 @@ class HashLoadBalancer(object):
         self.connection = connection
         connection.addListeners(self)
 
+        # Dynamiczne mapowanie portów
+        self.host_ports = set()  # Porty prowadzące do hostów
+        self.switch_ports = set()  # Porty prowadzące do switchy
+
     def _handle_PacketIn(self, event):
         packet = event.parsed
 
@@ -21,12 +25,16 @@ class HashLoadBalancer(object):
             log.info("Non-IPv4 packet received; ignoring")
             return
 
+        # Klasyfikacja portów dynamicznie na podstawie ruchu
+        if event.port not in self.host_ports and event.port not in self.switch_ports:
+            self._classify_port(event.port, packet)
+
         # Oblicz hash na podstawie adresu źródłowego
         src_ip = ip.srcip.toStr()
         hash_value = int(hashlib.md5(src_ip.encode()).hexdigest(), 16)
         
-        # Lista dostępnych portów na przełączniku
-        available_ports = [p.port_no for p in self.connection.features.ports if p.port_no != event.port and p.port_no < of.OFPP_MAX]
+        # Lista dostępnych portów prowadzących do innych switchy
+        available_ports = [p for p in self.switch_ports if p != event.port]
 
         if not available_ports:
             log.warning(f"No available ports to forward the packet for {src_ip}")
@@ -46,6 +54,17 @@ class HashLoadBalancer(object):
         msg.data = event.ofp
         msg.actions.append(of.ofp_action_output(port=selected_port))
         self.connection.send(msg)
+
+    def _classify_port(self, port, packet):
+        """Dynamicznie klasyfikuj port jako hostowy lub switchowy."""
+        if packet.type == packet.LLDP_TYPE:
+            # Port prowadzi do switcha, jeśli odbieramy LLDP
+            self.switch_ports.add(port)
+            log.info(f"Port {port} classified as SWITCH port")
+        else:
+            # W przeciwnym razie uznajemy port za hostowy
+            self.host_ports.add(port)
+            log.info(f"Port {port} classified as HOST port")
 
 class HashLoadBalancerController(object):
     def __init__(self):
