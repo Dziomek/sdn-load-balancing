@@ -1,7 +1,7 @@
 from pox.core import core
 from pox.lib.packet import ethernet
 from pox.lib.addresses import IPAddr
-from pox.openflow.libopenflow_01 import ofp_flow_mod, ofp_match, ofp_action_output
+from pox.openflow.libopenflow_01 import of, ofp_flow_mod, ofp_match, ofp_action_output
 import random
 
 log = core.getLogger()
@@ -23,7 +23,7 @@ class LoadBalancer:
         }
 
         # Inicjalizacja STP
-        event.connection.send(ofp_flow_mod(command=0, priority=10, match=ofp_match(), actions=[ofp_action_output(port=ofp_action_output.OFPP_CONTROLLER)]))
+        event.connection.send(ofp_flow_mod(command=of.OFPFC_ADD, priority=10, match=ofp_match(), actions=[ofp_action_output(port=of.OFPP_CONTROLLER)]))
         
         # Reguły load balancing na podstawie źródłowego IP
         for src_ip in range(1, 5):  # Załóżmy, że src IP to 192.168.1.x
@@ -40,7 +40,7 @@ class LoadBalancer:
 
             # Reguła przekierowania
             actions = [ofp_action_output(port=port)]
-            event.connection.send(ofp_flow_mod(command=0, match=match, actions=actions, priority=100))
+            event.connection.send(ofp_flow_mod(command=of.OFPFC_ADD, match=match, actions=actions, priority=100))
             log.info(f"Load balancing rule: IP {ip_src} -> {chosen_server} (Port {port})")
 
 # Inicjalizacja
