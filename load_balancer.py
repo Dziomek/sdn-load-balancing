@@ -23,7 +23,7 @@ class LoadBalancer:
         }
 
         # Inicjalizacja STP
-        event.connection.send(ofp_flow_mod(priority=10, match=ofp_match(), actions=[ofp_action_output(port=OFPP_CONTROLLER)]))
+        event.connection.send(ofp_flow_mod(priority=10, match=ofp_match(), actions=[ofp_action_output()]))
         
         # Reguły load balancing na podstawie źródłowego IP
         for src_ip in range(1, 5):  # Załóżmy, że src IP to 192.168.1.x
