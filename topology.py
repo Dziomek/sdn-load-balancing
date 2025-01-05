@@ -8,6 +8,7 @@ from mininet.log import setLogLevel
 from mininet.cli import CLI
 import threading
 import random
+import time
 
 class CustomTopo(Topo):
     def build(self):
@@ -50,8 +51,8 @@ class CustomTopo(Topo):
         self.addLink(s2, s3)
 
 
-def generate_traffic(host, hosts):
-    hosts = [h for h in hosts if h != host]
+def generate_traffic(host, servers, other_hosts):
+    hosts = [h for h in other_hosts if h != host]
 
     host.cmd('iperf -s &')
 
@@ -79,8 +80,11 @@ def run():
         host = net.get('h' + str(i))
         hosts.append(host)
 
+    servers = [net.get(f'h{i}') for i in range(1, 5)]
+    other_hosts = [host for host in hosts if host not in servers]
+
     for host in hosts:
-        t = threading.Thread(target=generate_traffic, args=(host, hosts))
+        t = threading.Thread(target=generate_traffic, args=(host, servers, other_hosts))
         t.setDaemon(True)
         t.start()
     
