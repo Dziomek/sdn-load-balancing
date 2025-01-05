@@ -13,10 +13,10 @@ log = core.getLogger()
 
 # Lista serwerów
 SERVERS = [
-    {"ip": IPAddr("10.0.0.1"), "mac": EthAddr("00:00:00:00:00:01")},
-    {"ip": IPAddr("10.0.0.2"), "mac": EthAddr("00:00:00:00:00:02")},
-    {"ip": IPAddr("10.0.0.3"), "mac": EthAddr("00:00:00:00:00:03")},
-    {"ip": IPAddr("10.0.0.4"), "mac": EthAddr("00:00:00:00:00:04")},
+    {"ip": IPAddr("10.0.0.1")},
+    {"ip": IPAddr("10.0.0.2")},
+    {"ip": IPAddr("10.0.0.3")},
+    {"ip": IPAddr("10.0.0.4")}
 ]
 
 class IPHashLoadBalancer(object):
@@ -66,7 +66,6 @@ class IPHashLoadBalancer(object):
         msg.match = of.ofp_match.from_packet(packet, event.port)
         msg.idle_timeout = 10
         msg.hard_timeout = 30
-        msg.actions.append(of.ofp_action_dl_addr.set_dst(selected_server["mac"]))
         msg.actions.append(of.ofp_action_nw_addr.set_dst(selected_server["ip"]))
         msg.actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
         self.connection.send(msg)
@@ -83,7 +82,6 @@ class IPHashLoadBalancer(object):
         # Wyślij pakiet natychmiast
         out = of.ofp_packet_out()
         out.data = event.ofp
-        out.actions.append(of.ofp_action_dl_addr.set_dst(selected_server["mac"]))
         out.actions.append(of.ofp_action_nw_addr.set_dst(selected_server["ip"]))
         out.actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
         self.connection.send(out)
