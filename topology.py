@@ -80,7 +80,7 @@ def run():
         host = net.get('h' + str(i))
         hosts.append(host)
 
-    servers = [net.get(f'h{i}') for i in range(1, 5)]
+    servers = [net.get('h' + str(i)) for i in range(1, 5)]
     other_hosts = [host for host in hosts if host not in servers]
 
     for host in hosts:
