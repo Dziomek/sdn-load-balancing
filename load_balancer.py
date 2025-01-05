@@ -1,5 +1,5 @@
 from pox.core import core
-from pox.lib.packet import ethernet, ip
+from pox.lib.packet import ethernet
 from pox.lib.addresses import IPAddr
 from pox.openflow.libopenflow_01 import ofp_flow_mod, ofp_match, ofp_action_output
 import random
