@@ -63,7 +63,7 @@ def generate_traffic(host, vip):
         traffic_duration = random.randint(1, 15)
 
         # Wysyłanie ruchu do VIP
-        host.cmd('iperf -c {} -t {} &'.format(vip, traffic_duration))        
+        host.cmd('iperf -c {} -t {} -4 &'.format(vip, traffic_duration))        
         time.sleep(traffic_duration)
 
         # Losowa przerwa przed wygenerowaniem kolejnego ruchu
