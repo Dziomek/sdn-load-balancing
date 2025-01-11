@@ -41,6 +41,11 @@ class CustomTopo(Topo):
         self.addLink(h7, s6)
         self.addLink(h8, s6)
         self.addLink(vip_host, s1)
+        self.addLink(vip_host, s2)
+        self.addLink(vip_host, s3)
+        self.addLink(vip_host, s4)
+        self.addLink(vip_host, s5)
+        self.addLink(vip_host, s6)
 
         # connections switch-switch
         self.addLink(s1, s2)
