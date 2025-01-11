@@ -77,6 +77,7 @@ class IPHashLoadBalancer(object):
             log.info("Redirected %s:%s -> %s", src_ip, src_port, selected_server)
 
     def _handle_PacketIn(self, event):
+        log.info("PacketIn odebrany z przełącznika %s", dpid_to_str(event.dpid))
         packet = event.parsed
         if not packet:
             return
