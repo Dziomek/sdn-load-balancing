@@ -51,51 +51,41 @@ class CustomTopo(Topo):
         self.addLink(s2, s3)
 
 
-def generate_traffic(host, servers, other_hosts):
-    hosts = [h for h in other_hosts if h != host]
-
+def generate_traffic(host, vip):
+    """
+    Funkcja generuje ruch z podanego hosta do VIP.
+    """
     host.cmd('iperf -s &')
 
     time.sleep(5)
-    
+
     while True:
         traffic_duration = random.randint(1, 15)
-        
-        target_host = random.choice(hosts)
 
-        host.cmd('iperf -c ' + target_host.IP() + ' -t ' + str(traffic_duration) + ' &')
-
+        # Wysyłanie ruchu do VIP
+        host.cmd(f'iperf -c {vip} -t {traffic_duration} &')
         time.sleep(traffic_duration)
 
+        # Losowa przerwa przed wygenerowaniem kolejnego ruchu
         wait_time = random.randint(1, 15)
         time.sleep(wait_time)
+
 
 def run():
     topo = CustomTopo()
     net = Mininet(topo=topo, controller=lambda name: RemoteController(name, ip='127.0.0.1', port=6633))
     net.start()
 
-    hosts = []
-    for i in range(1,9):
-        host = net.get('h' + str(i))
-        hosts.append(host)
+    vip = '10.0.0.100'  # Wirtualny adres IP
+    hosts = [net.get(f'h{i}') for i in range(1, 9)]
+    clients = hosts[4:]  # h5-h8 jako klienci
 
-    servers = [net.get('h' + str(i)) for i in range(1, 5)]
-    other_hosts = [host for host in hosts if host not in servers]
-
-    for host in hosts:
-        t = threading.Thread(target=generate_traffic, args=(host, servers, other_hosts))
+    # Uruchamianie generowania ruchu tylko na hostach-klientach
+    for host in clients:
+        t = threading.Thread(target=generate_traffic, args=(host, vip))
         t.setDaemon(True)
         t.start()
-    
 
-    #h2 = net.get('h2')
-    #h2.popen('iperf -s &')
-
-
-    #h1 = net.get('h1')
-    #h1.popen('iperf -c {} -t 0 -i 1 &'.format(h2.IP()))
-    
     CLI(net)
     net.stop()
 

@@ -1,98 +1,94 @@
-# -*- coding: utf-8 -*-
 from pox.core import core
 from pox.lib.packet.ethernet import ethernet
 from pox.lib.packet.ipv4 import ipv4
 from pox.lib.packet.tcp import tcp
-from pox.lib.packet.udp import udp
-from pox.lib.addresses import IPAddr, EthAddr
+from pox.lib.addresses import IPAddr
+from pox.lib.util import dpid_to_str
 import pox.openflow.libopenflow_01 as of
-import random
 import hashlib
 
 log = core.getLogger()
 
-# Lista serwerów
-SERVERS = [
-    {"ip": IPAddr("10.0.0.1")},
-    {"ip": IPAddr("10.0.0.2")},
-    {"ip": IPAddr("10.0.0.3")},
-    {"ip": IPAddr("10.0.0.4")}
-]
-
 class IPHashLoadBalancer(object):
     def __init__(self, connection):
         self.connection = connection
-        self.connection.addListeners(self)
-        self.mac_to_port = {}
+        self.vip = IPAddr("10.0.0.100")  # Virtual IP
+        self.servers = [
+            IPAddr("10.0.0.1"),
+            IPAddr("10.0.0.2"),
+            IPAddr("10.0.0.3"),
+            IPAddr("10.0.0.4")
+        ]
+        self.server_count = len(self.servers)
 
-    def select_server(self, src_ip):
-        # Funkcja IP Hash
-        hash_value = int(hashlib.md5(str(src_ip).encode()).hexdigest(), 16)
-        server_index = hash_value % len(SERVERS)
-        return SERVERS[server_index]
+        # Connect handler to listen for incoming packets
+        connection.addListeners(self)
 
-    def _handle_PacketIn(self, event):
-        packet = event.parsed
+    def hash_ip_port(self, ip, port):
+        # Hash function based on IP and port
+        hash_value = hashlib.md5(f"{ip}:{port}".encode()).hexdigest()
+        return int(hash_value, 16) % self.server_count
 
-        if not packet.parsed:
-            log.warning("Nieparsowalny pakiet")
-            return
+    def install_flow(self, match, actions, priority=10, idle_timeout=30, hard_timeout=0):
+        # Create a flow mod message
+        msg = of.ofp_flow_mod()
+        msg.match = match
+        msg.priority = priority
+        msg.idle_timeout = idle_timeout
+        msg.hard_timeout = hard_timeout
+        msg.actions = actions
+        self.connection.send(msg)
+        log.info("Flow installed: %s -> %s", match, actions)
 
-        # Obsługa ruchu tylko IP (IPv4)
-        if not isinstance(packet.next, ipv4):
-            return
+    def handle_packet(self, packet, event):
+        ip_packet = packet.find('ipv4')
+        tcp_packet = packet.find('tcp')
 
-        ip_packet = packet.next
-
-        # Obsługa tylko TCP i UDP
-        if not isinstance(ip_packet.next, (tcp, udp)):
+        if not ip_packet or not tcp_packet:
             return
 
         src_ip = ip_packet.srcip
         dst_ip = ip_packet.dstip
+        src_port = tcp_packet.srcport
 
-        # Jeżeli ruch jest skierowany do serwera
-        if dst_ip in [server["ip"] for server in SERVERS]:
-            log.info(f"Pakiet skierowany do serwera: {dst_ip}")
+        # Only handle packets destined to the VIP
+        if dst_ip == self.vip:
+            server_index = self.hash_ip_port(src_ip, src_port)
+            selected_server = self.servers[server_index]
+
+            # Rewrite packet destination to the selected server
+            match = of.ofp_match.from_packet(packet, event.port)
+            match.nw_dst = self.vip
+
+            actions = [
+                of.ofp_action_nw_addr.set_dst(selected_server),
+                of.ofp_action_output(port=of.OFPP_NORMAL)
+            ]
+
+            # Install flow to forward packets to the selected server
+            self.install_flow(match, actions)
+
+            # Send the packet to the selected server
+            out = of.ofp_packet_out(data=event.ofp)
+            out.actions = actions
+            self.connection.send(out)
+            log.info("Redirected %s:%s -> %s", src_ip, src_port, selected_server)
+
+    def _handle_PacketIn(self, event):
+        packet = event.parsed
+        if not packet:
             return
+        self.handle_packet(packet, event)
 
-        # Wybierz serwer na podstawie IP Hash
-        selected_server = self.select_server(src_ip)
 
-        log.info(f"Przekierowanie ruchu od {src_ip} do serwera {selected_server['ip']}")
-
-        # Utwórz flow dla ruchu klient → serwer
-        msg = of.ofp_flow_mod()
-        msg.match = of.ofp_match.from_packet(packet, event.port)
-        msg.idle_timeout = 10
-        msg.hard_timeout = 30
-        msg.actions.append(of.ofp_action_nw_addr.set_dst(selected_server["ip"]))
-        msg.actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
-        self.connection.send(msg)
-
-        # Utwórz flow dla ruchu serwer → klient
-        msg_back = of.ofp_flow_mod()
-        msg_back.match.dl_dst = packet.src
-        msg_back.match.nw_src = selected_server["ip"]
-        msg_back.actions.append(of.ofp_action_dl_addr.set_src(packet.dst))
-        msg_back.actions.append(of.ofp_action_nw_addr.set_src(ip_packet.dstip))
-        msg_back.actions.append(of.ofp_action_output(port=event.port))
-        self.connection.send(msg_back)
-
-        # Wyślij pakiet natychmiast
-        out = of.ofp_packet_out()
-        out.data = event.ofp
-        out.actions.append(of.ofp_action_nw_addr.set_dst(selected_server["ip"]))
-        out.actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
-        self.connection.send(out)
-
-class IPHashController(object):
+class POXLoadBalancer(object):
     def __init__(self):
         core.openflow.addListeners(self)
 
     def _handle_ConnectionUp(self, event):
-        log.info("Połączenie z przełącznikiem %s" % event.connection)
+        log.info("Switch %s has connected", dpid_to_str(event.dpid))
         IPHashLoadBalancer(event.connection)
 
+
 def launch():
-    core.registerNew(IPHashController)
+    core.registerNew(POXLoadBalancer)
