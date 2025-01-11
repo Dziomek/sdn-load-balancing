@@ -46,6 +46,7 @@ class IPHashLoadBalancer(object):
         tcp_packet = packet.find('ARP')
 
         if not ip_packet or not tcp_packet:
+            log.info("Nie znalazłem odpowiedniego pakietu. Typ pakietu {}".format(type(packet)))
             return
 
         src_ip = packet.srcip
