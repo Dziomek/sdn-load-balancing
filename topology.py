@@ -63,7 +63,7 @@ def generate_traffic(host, vip):
         traffic_duration = random.randint(1, 15)
 
         # Wysyłanie ruchu do VIP
-        host.cmd(f'iperf -c {vip} -t {traffic_duration} &')
+        host.cmd('iperf -c {} -t {} &'.format(vip, traffic_duration))        
         time.sleep(traffic_duration)
 
         # Losowa przerwa przed wygenerowaniem kolejnego ruchu
@@ -77,7 +77,7 @@ def run():
     net.start()
 
     vip = '10.0.0.100'  # Wirtualny adres IP
-    hosts = [net.get(f'h{i}') for i in range(1, 9)]
+    hosts = [net.get('h{}'.format(i)) for i in range(1, 9)]
     clients = hosts[4:]  # h5-h8 jako klienci
 
     # Uruchamianie generowania ruchu tylko na hostach-klientach
