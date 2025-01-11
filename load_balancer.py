@@ -42,8 +42,8 @@ class IPHashLoadBalancer(object):
 
     def handle_packet(self, packet, event):
         log.info("Przechodzę do funkcji handle_packet. Pakiet {}".format(packet))
-        ip_packet = packet.find('ipv4')
-        tcp_packet = packet.find('tcp')
+        ip_packet = packet.find('ip')
+        tcp_packet = packet.find('arp')
 
         if not ip_packet or not tcp_packet:
             return
