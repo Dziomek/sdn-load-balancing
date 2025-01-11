@@ -41,7 +41,7 @@ class IPHashLoadBalancer(object):
         log.info("Flow installed: %s -> %s", match, actions)
 
     def handle_packet(self, packet, event):
-        log.info("Przechodzę do funkcji handle_packet")
+        log.info("Przechodzę do funkcji handle_packet. Pakiet {}".format(packet))
         ip_packet = packet.find('ipv4')
         tcp_packet = packet.find('tcp')
 
