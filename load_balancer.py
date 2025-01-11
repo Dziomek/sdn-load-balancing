@@ -41,16 +41,16 @@ class IPHashLoadBalancer(object):
         log.info("Flow installed: %s -> %s", match, actions)
 
     def handle_packet(self, packet, event):
-        log.info("Przechodzę do funkcji handle_packet. Pakiet {}".format(packet))
-        ip_packet = packet.find('ip')
-        tcp_packet = packet.find('arp')
+        # log.info("Przechodzę do funkcji handle_packet. Pakiet {}".format(packet))
+        # ip_packet = packet.find('ip')
+        # tcp_packet = packet.find('arp')
 
-        if not ip_packet or not tcp_packet:
-            return
+        # if not ip_packet or not tcp_packet:
+        #     return
 
-        src_ip = ip_packet.srcip
-        dst_ip = ip_packet.dstip
-        src_port = tcp_packet.srcport
+        src_ip = packet.srcip
+        dst_ip = packet.dstip
+        src_port = packet.srcport
 
         log.info("Pakiet z {} do VIP {} został odebrany.".format(src_ip, dst_ip))
 
