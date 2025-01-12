@@ -16,12 +16,12 @@ class IPHashLoadBalancer(object):
     def __init__(self, connection):
         self.connection = connection
         self.vip = IPAddr("10.0.0.100")  # Virtual IP
-        self.servers = {
-            IPAddr("10.0.0.1"): EthAddr("00:00:00:00:00:01"),
-            IPAddr("10.0.0.2"): EthAddr("00:00:00:00:00:02"),
-            IPAddr("10.0.0.3"): EthAddr("00:00:00:00:00:03"),
-            IPAddr("10.0.0.4"): EthAddr("00:00:00:00:00:04")
-        }
+        self.servers = [
+            { 'IP': IPAddr("10.0.0.1"), 'MAC': EthAddr("00:00:00:00:00:01") },
+            { 'IP': IPAddr("10.0.0.2"), 'MAC': EthAddr("00:00:00:00:00:02") },
+            { 'IP': IPAddr("10.0.0.3"), 'MAC': EthAddr("00:00:00:00:00:03") },
+            { 'IP': IPAddr("10.0.0.4"), 'MAC': EthAddr("00:00:00:00:00:04") }
+        ]
         self.server_count = len(self.servers)
 
         # Connect handler to listen for incoming packets
@@ -94,12 +94,16 @@ class IPHashLoadBalancer(object):
             server_index = self.hash_ip_port(src_ip, src_port)
             selected_server = self.servers[server_index]
 
+            selected_server_ip = selected_server['IP']
+            selected_server_mac = selected_server['MAC']
+
             # Rewrite packet destination to the selected server
             match = of.ofp_match.from_packet(packet, event.port)
             match.nw_dst = self.vip
 
             actions = [
-                of.ofp_action_nw_addr.set_dst(selected_server),
+                of.ofp_action_nw_addr.set_dst(selected_server_ip),
+                of.ofp_action_dl_addr.set_dst(selected_server_mac),
                 of.ofp_action_output(port=of.OFPP_NORMAL)
             ]
 
@@ -110,7 +114,7 @@ class IPHashLoadBalancer(object):
             out = of.ofp_packet_out(data=event.ofp)
             out.actions = actions
             self.connection.send(out)
-            my_log.info("Redirected %s:%s -> %s", src_ip, src_port, selected_server)
+            my_log.info("Przekierowano %s:%s -> %s (%s)", src_ip, src_port, selected_server_ip, selected_server_mac)
 
     def _handle_PacketIn(self, event):
         # log.info("PacketIn odebrany z przełącznika %s", dpid_to_str(event.dpid))
