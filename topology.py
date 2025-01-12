@@ -98,10 +98,10 @@ def run():
     vip_host.cmd('ifconfig vip_host-eth0 {} netmask 255.255.255.0 up'.format(vip))
 
     # Uruchamianie generowania ruchu tylko na hostach-klientach
-    for host in clients:
-        t = threading.Thread(target=generate_traffic, args=(host, vip))
-        t.setDaemon(True)
-        t.start()
+    # for host in clients:
+    #     t = threading.Thread(target=generate_traffic, args=(host, vip))
+    #     t.setDaemon(True)
+    #     t.start()
 
     CLI(net)
     net.stop()
