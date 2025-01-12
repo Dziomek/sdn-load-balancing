@@ -1,6 +1,7 @@
 from pox.core import core
 import pox.openflow.libopenflow_01 as of
 from pox.lib.packet.ipv4 import ipv4
+from pox.lib.packet.arp import arp
 from pox.lib.packet.ethernet import ethernet
 from pox.lib.addresses import IPAddr, EthAddr
 import hashlib
@@ -39,6 +40,30 @@ class OpenFlowLoadBalancer:
 
         # Instalujemy statyczne flowy na przełącznikach brzegowych
         self.install_static_flows(connection.dpid)
+
+    def _handle_arp(self, event, packet, arp_packet):
+        if arp_packet.opcode == arp.REQUEST and str(arp_packet.protodst) == VIP:
+            log.info("Przechwycono ARP request dla %s, odpowiadam ARP reply", VIP)
+
+            arp_reply = arp()
+            arp_reply.hwsrc = VIP_MAC  # Fałszywy MAC VIP
+            arp_reply.hwdst = arp_packet.hwsrc
+            arp_reply.opcode = arp.REPLY
+            arp_reply.protosrc = IPAddr(VIP)
+            arp_reply.protodst = arp_packet.protosrc
+
+            eth = ethernet()
+            eth.type = ethernet.ARP_TYPE
+            eth.src = VIP_MAC
+            eth.dst = arp_packet.hwsrc
+            eth.payload = arp_reply
+
+            msg = of.ofp_packet_out()
+            msg.data = eth.pack()
+            msg.actions.append(of.ofp_action_output(port=event.port))
+            self.connection.send(msg)
+            log.info("Wysłano fake ARP reply: %s ma MAC %s", VIP, VIP_MAC)
+
 
     def install_static_flows(self, dpid):
         """Instaluje statyczne flowy na przełącznikach brzegowych."""
@@ -82,6 +107,12 @@ class OpenFlowLoadBalancer:
     def _handle_PacketIn(self, event):
         """Obsługa pakietów przychodzących do kontrolera."""
         packet = event.parsed
+
+        arp_packet = packet.find(arp)
+        if arp_packet:
+            self._handle_arp(event, packet, arp_packet)
+            return
+
         ip_packet = packet.find(ipv4)
 
         if not ip_packet:
