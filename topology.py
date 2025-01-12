@@ -86,11 +86,17 @@ def run():
     vip = '10.0.0.100'  # Wirtualny adres IP
     hosts = [net.get('h{}'.format(i)) for i in range(1, 9)]
 
-    for host in net.hosts: ## Wyłączenie IPV6
+    for host in hosts: ## Wyłączenie IPV6
         host.cmd('sysctl -w net.ipv6.conf.all.disable_ipv6=1')
         host.cmd('sysctl -w net.ipv6.conf.default.disable_ipv6=1')
         host.cmd('sysctl -w net.ipv6.conf.lo.disable_ipv6=1')
+        host.cmd('ifconfig {} inet6 del'.format(host.name + "-eth0"))  # Usunięcie adresów IPv6
+
+        host.cmd('dhclient -r')  # Zwolnienie adresu DHCP
         host.cmd('pkill dhclient') ## wyłączenie DHCP
+
+    for switch in net.switches:
+        switch.cmd('ovs-vsctl set bridge {} other-config:ipv6=false'.format(switch.name))
 
     clients = hosts[4:]  # h5-h8 jako klienci
 
