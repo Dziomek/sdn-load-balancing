@@ -41,7 +41,8 @@ class IPHashLoadBalancer(object):
         msg.hard_timeout = hard_timeout
         msg.actions = actions
         self.connection.send(msg)
-        my_log.info("Flow installed: %s -> %s", match, actions)
+        switch_dpid = self.connection.dpid
+        my_log.info("Instaluję flow na przełączniku DPID=%s: match=%s, actions=%s", switch_dpid, match, actions)
 
     def handle_packet(self, packet, event):
         arp_packet = packet.find(arp)
