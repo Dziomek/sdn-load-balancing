@@ -48,6 +48,8 @@ class IPHashLoadBalancer(object):
         if not ip_packet or not tcp_packet:
             log.info("Nie znalazłem odpowiedniego pakietu. Typ pakietu {}".format(type(packet)))
             return
+        else:
+            log.info("ZNALAZŁEM PAKIET!! Typ pakietu {}".format(type(packet)))
 
         src_ip = packet.srcip
         dst_ip = packet.dstip
