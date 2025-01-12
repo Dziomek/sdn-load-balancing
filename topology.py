@@ -88,8 +88,8 @@ def run():
 
     clients = hosts[4:]  # h5-h8 jako klienci
 
-    vip_host = net.get('vip_host')
-    vip_host.cmd('ifconfig vip_host-eth0 {} netmask 255.255.255.0 up'.format(vip))
+    # vip_host = net.get('vip_host')
+    # vip_host.cmd('ifconfig vip_host-eth0 {} netmask 255.255.255.0 up'.format(vip))
 
     # Uruchamianie generowania ruchu tylko na hostach-klientach
     for host in clients:
