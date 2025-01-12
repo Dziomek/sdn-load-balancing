@@ -21,7 +21,7 @@ class CustomTopo(Topo):
         h6 = self.addHost('h6')
         h7 = self.addHost('h7')
         h8 = self.addHost('h8')
-        vip_host = self.addHost('vip_host')
+        # vip_host = self.addHost('vip_host')
 
         # switches
         s1 = self.addSwitch('s1')
@@ -40,12 +40,12 @@ class CustomTopo(Topo):
         self.addLink(h6, s5)
         self.addLink(h7, s6)
         self.addLink(h8, s6)
-        self.addLink(vip_host, s1)
-        self.addLink(vip_host, s2)
-        self.addLink(vip_host, s3)
-        self.addLink(vip_host, s4)
-        self.addLink(vip_host, s5)
-        self.addLink(vip_host, s6)
+        # self.addLink(vip_host, s1)
+        # self.addLink(vip_host, s2)
+        # self.addLink(vip_host, s3)
+        # self.addLink(vip_host, s4)
+        # self.addLink(vip_host, s5)
+        # self.addLink(vip_host, s6)
 
         # connections switch-switch
         self.addLink(s1, s2)
