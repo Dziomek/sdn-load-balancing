@@ -31,6 +31,12 @@ class CustomTopo(Topo):
         s5 = self.addSwitch('s5')
         s6 = self.addSwitch('s6')
 
+        #connections vip_host - edge_switch
+        self.addLink(vip_host, s1)
+        self.addLink(vip_host, s3)
+        self.addLink(vip_host, s5)
+        self.addLink(vip_host, s6)
+
         # connections switch-host
         self.addLink(h1, s1)
         self.addLink(h2, s1)
@@ -40,12 +46,6 @@ class CustomTopo(Topo):
         self.addLink(h6, s5)
         self.addLink(h7, s6)
         self.addLink(h8, s6)
-        self.addLink(vip_host, s1)
-        # self.addLink(vip_host, s2)
-        self.addLink(vip_host, s3)
-        # self.addLink(vip_host, s4)
-        self.addLink(vip_host, s5)
-        self.addLink(vip_host, s6)
 
         # connections switch-switch
         self.addLink(s1, s2)

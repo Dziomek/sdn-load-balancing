@@ -2,7 +2,7 @@ from pox.core import core
 import pox.openflow.libopenflow_01 as of
 from pox.lib.packet.ipv4 import ipv4
 from pox.lib.packet.ethernet import ethernet
-from pox.lib.addresses import IPAddr
+from pox.lib.addresses import IPAddr, EthAddr
 import hashlib
 
 log = core.getLogger()
@@ -29,11 +29,42 @@ STATIC_PATHS = {
     ('h8', 'h4'): ['s6', 's4', 's3'],
 }
 SERVERS = ['h1', 'h2', 'h3', 'h4']
+VIP = "10.0.0.100"
+VIP_MAC = EthAddr("00:00:00:00:10:00")  # Fałszywy MAC VIP
 
 class OpenFlowLoadBalancer:
     def __init__(self, connection):
         self.connection = connection
         self.connection.addListeners(self)
+
+        # Instalujemy statyczne flowy na przełącznikach brzegowych
+        self.install_static_flows(connection.dpid)
+
+    def install_static_flows(self, dpid):
+        """Instaluje statyczne flowy na przełącznikach brzegowych."""
+        switch_name = f"s{dpid}"
+        EDGE_SWITCHES = { #switch, port
+            "s1": 1,  
+            "s3": 1,
+            "s5": 1,
+            "s6": 1
+        }
+        if switch_name in EDGE_SWITCHES:
+            vip_port = EDGE_SWITCHES[switch_name]
+
+            # Flow dla ARP
+            msg_arp = of.ofp_flow_mod()
+            msg_arp.match = of.ofp_match(dl_type=0x0806, nw_dst=VIP)
+            msg_arp.actions.append(of.ofp_action_output(port=vip_port))
+            self.connection.send(msg_arp)
+
+            # Flow dla ruchu IP do VIP
+            msg_ip = of.ofp_flow_mod()
+            msg_ip.match = of.ofp_match(dl_type=0x0800, nw_dst=VIP)
+            msg_ip.actions.append(of.ofp_action_output(port=vip_port))
+            self.connection.send(msg_ip)
+
+            log.info("Zainstalowano statyczne flowy na %s do VIP %s", switch_name, VIP)
 
     def hash_ip_port(self, src_ip, src_port):
         """Hashuje IP i port źródłowy, wybiera serwer."""
