@@ -51,9 +51,9 @@ class IPHashLoadBalancer(object):
         else:
             log.info("ZNALAZŁEM PAKIET!! Typ pakietu {}".format(type(packet)))
 
-        src_ip = packet.srcip
-        dst_ip = packet.dstip
-        src_port = packet.srcport
+        src_ip = ip_packet.srcip
+        dst_ip = ip_packet.dstip
+        src_port = tcp_packet.srcport
 
         log.info("Pakiet z {} do VIP {} został odebrany.".format(src_ip, dst_ip))
 
