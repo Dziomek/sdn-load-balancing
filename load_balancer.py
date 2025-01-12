@@ -55,7 +55,7 @@ class IPHashLoadBalancer(object):
         dst_ip = ip_packet.dstip
         src_port = tcp_packet.srcport
 
-        log.info("Pakiet z {} do VIP {} został odebrany.".format(src_ip, dst_ip))
+        log.info("Pakiet z {} do VIP {} został odebrany. Src port: {}".format(src_ip, dst_ip, src_port))
 
         # Only handle packets destined to the VIP
         if dst_ip == self.vip:
