@@ -7,8 +7,10 @@ from pox.lib.addresses import IPAddr, EthAddr
 from pox.lib.util import dpid_to_str
 import pox.openflow.libopenflow_01 as of
 import hashlib
+import logging
 
 log = core.getLogger()
+my_log = logging.getLogger("my_logs")
 
 class IPHashLoadBalancer(object):
     def __init__(self, connection):
@@ -39,17 +41,17 @@ class IPHashLoadBalancer(object):
         msg.hard_timeout = hard_timeout
         msg.actions = actions
         self.connection.send(msg)
-        log.info("Flow installed: %s -> %s", match, actions)
+        my_log.info("Flow installed: %s -> %s", match, actions)
 
     def handle_packet(self, packet, event):
         arp_packet = packet.find(arp)
         if arp_packet:
             if arp_packet.opcode == arp.REQUEST and arp_packet.protodst == self.vip:
-                log.info("Odpowiedni pakiet arp")
+                my_log.info("Odpowiedni pakiet arp")
                 # Jeśli jeszcze nie mamy MAC dla VIP, zapisujemy pierwszy, który zobaczymy
                 if not hasattr(self, 'vip_mac'):
                     self.vip_mac = packet.src
-                    log.info("Zapisano MAC dla VIP: %s", self.vip_mac)
+                    my_log.info("Zapisano MAC dla VIP: %s", self.vip_mac)
 
                 arp_reply = arp()
                 arp_reply.hwsrc = self.vip_mac
@@ -71,7 +73,7 @@ class IPHashLoadBalancer(object):
 
                 return
             else:
-                log.info("Inny pakiet arp")
+                my_log.info("Inny pakiet arp")
         
         ip_packet = packet.find(ipv4)
         tcp_packet = packet.find(tcp)
@@ -79,13 +81,13 @@ class IPHashLoadBalancer(object):
         if not ip_packet or not tcp_packet:
             return
         else:
-            log.info("ZNALAZŁEM PAKIET!! Typ pakietu {}".format(type(packet)))
+            my_log.info("ZNALAZŁEM PAKIET!! Typ pakietu {}".format(type(packet)))
 
         src_ip = ip_packet.srcip
         dst_ip = ip_packet.dstip
         src_port = tcp_packet.srcport
 
-        log.info("Pakiet z {} do VIP {} został odebrany. Src port: {}".format(src_ip, dst_ip, src_port))
+        my_log.info("Pakiet z {} do VIP {} został odebrany. Src port: {}".format(src_ip, dst_ip, src_port))
 
         # Only handle packets destined to the VIP
         if dst_ip == self.vip:
@@ -108,7 +110,7 @@ class IPHashLoadBalancer(object):
             out = of.ofp_packet_out(data=event.ofp)
             out.actions = actions
             self.connection.send(out)
-            log.info("Redirected %s:%s -> %s", src_ip, src_port, selected_server)
+            my_log.info("Redirected %s:%s -> %s", src_ip, src_port, selected_server)
 
     def _handle_PacketIn(self, event):
         # log.info("PacketIn odebrany z przełącznika %s", dpid_to_str(event.dpid))
@@ -123,7 +125,7 @@ class POXLoadBalancer(object):
         core.openflow.addListeners(self)
 
     def _handle_ConnectionUp(self, event):
-        log.info("Switch %s has connected", dpid_to_str(event.dpid))
+        my_log.info("Switch %s has connected", dpid_to_str(event.dpid))
         IPHashLoadBalancer(event.connection)
 
 
