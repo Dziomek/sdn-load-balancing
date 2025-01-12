@@ -50,13 +50,13 @@ class OpenFlowLoadBalancer:
 
     def _handle_PacketIn(self, event):
         """Obsługa pakietów przychodzących do kontrolera."""
-        log.info("Przełącznik {} dostaje PACKET IN".format(switch_dpid = self.connection.dpid))
         packet = event.parsed
         ip_packet = packet.find(ipv4)
 
         if not ip_packet:
             return
-
+        
+        log.info("ZNALAZŁEM PAKIET!! Typ pakietu {}".format(type(ip_packet)))
         src_ip = str(ip_packet.srcip)
         dst_ip = str(ip_packet.dstip)
         src_port = event.port
