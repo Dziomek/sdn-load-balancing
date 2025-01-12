@@ -85,6 +85,13 @@ def run():
 
     vip = '10.0.0.100'  # Wirtualny adres IP
     hosts = [net.get('h{}'.format(i)) for i in range(1, 9)]
+
+    for host in net.hosts: ## Wyłączenie IPV6
+        host.cmd('sysctl -w net.ipv6.conf.all.disable_ipv6=1')
+        host.cmd('sysctl -w net.ipv6.conf.default.disable_ipv6=1')
+        host.cmd('sysctl -w net.ipv6.conf.lo.disable_ipv6=1')
+        host.cmd('pkill dhclient') ## wyłączenie DHCP
+
     clients = hosts[4:]  # h5-h8 jako klienci
 
     vip_host = net.get('vip_host')
