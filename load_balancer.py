@@ -2,7 +2,7 @@ from pox.core import core
 from pox.lib.packet.ethernet import ethernet
 from pox.lib.packet.ipv4 import ipv4
 from pox.lib.packet.tcp import tcp
-from pox.lib.addresses import IPAddr
+from pox.lib.addresses import IPAddr, EthAddr
 from pox.lib.util import dpid_to_str
 import pox.openflow.libopenflow_01 as of
 import hashlib
@@ -13,12 +13,12 @@ class IPHashLoadBalancer(object):
     def __init__(self, connection):
         self.connection = connection
         self.vip = IPAddr("10.0.0.100")  # Virtual IP
-        self.servers = [
-            IPAddr("10.0.0.1"),
-            IPAddr("10.0.0.2"),
-            IPAddr("10.0.0.3"),
-            IPAddr("10.0.0.4")
-        ]
+        self.servers = {
+            IPAddr("10.0.0.1"): EthAddr("00:00:00:00:00:01"),
+            IPAddr("10.0.0.2"): EthAddr("00:00:00:00:00:02"),
+            IPAddr("10.0.0.3"): EthAddr("00:00:00:00:00:03"),
+            IPAddr("10.0.0.4"): EthAddr("00:00:00:00:00:04")
+        }
         self.server_count = len(self.servers)
 
         # Connect handler to listen for incoming packets
@@ -42,8 +42,8 @@ class IPHashLoadBalancer(object):
 
     def handle_packet(self, packet, event):
         log.info("Przechodzę do funkcji handle_packet. Pakiet {}".format(packet))
-        ip_packet = packet.find('IPV6')
-        tcp_packet = packet.find('ARP')
+        ip_packet = packet.find(ipv4)
+        tcp_packet = packet.find(tcp)
 
         if not ip_packet or not tcp_packet:
             log.info("Nie znalazłem odpowiedniego pakietu. Typ pakietu {}".format(type(packet)))
