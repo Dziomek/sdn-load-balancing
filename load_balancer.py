@@ -45,6 +45,7 @@ class IPHashLoadBalancer(object):
         arp_packet = packet.find(arp)
         if arp_packet:
             if arp_packet.opcode == arp.REQUEST and arp_packet.protodst == self.vip:
+                log.info("Odpowiedni pakiet arp")
                 # Jeśli jeszcze nie mamy MAC dla VIP, zapisujemy pierwszy, który zobaczymy
                 if not hasattr(self, 'vip_mac'):
                     self.vip_mac = packet.src
@@ -69,6 +70,8 @@ class IPHashLoadBalancer(object):
                 self.connection.send(msg)
 
                 return
+            else:
+                log.info("Inny pakiet arp")
 
         # 🔹 Filtrujemy IPv6
         if packet.find(ipv4) is None:
@@ -114,7 +117,7 @@ class IPHashLoadBalancer(object):
             log.info("Redirected %s:%s -> %s", src_ip, src_port, selected_server)
 
     def _handle_PacketIn(self, event):
-        log.info("PacketIn odebrany z przełącznika %s", dpid_to_str(event.dpid))
+        # log.info("PacketIn odebrany z przełącznika %s", dpid_to_str(event.dpid))
         packet = event.parsed
         if not packet:
             return
