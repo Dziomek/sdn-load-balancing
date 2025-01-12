@@ -72,11 +72,6 @@ class IPHashLoadBalancer(object):
                 return
             else:
                 log.info("Inny pakiet arp")
-
-        # 🔹 Filtrujemy IPv6
-        if packet.find(ipv4) is None:
-            log.info("Odrzucam pakiet nie będący IPv4: %s", type(packet))
-            return
         
         ip_packet = packet.find(ipv4)
         tcp_packet = packet.find(tcp)
