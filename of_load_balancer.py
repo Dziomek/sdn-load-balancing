@@ -56,10 +56,11 @@ class OpenFlowLoadBalancer:
         if not ip_packet:
             return
         
-        log.info("ZNALAZŁEM PAKIET!! Typ pakietu {}".format(type(ip_packet)))
         src_ip = str(ip_packet.srcip)
         dst_ip = str(ip_packet.dstip)
         src_port = event.port
+
+        log.info("ZNALAZŁEM PAKIET!! SRC_IP: %s DST_IP: %s SRC_PORT %s", src_ip, dst_ip, src_port)
 
         if dst_ip == "10.0.0.100":  # Ruch do VIP
             server_index = self.hash_ip_port(src_ip, src_port)
