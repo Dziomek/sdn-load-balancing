@@ -2,6 +2,7 @@ from pox.core import core
 from pox.lib.packet.ethernet import ethernet
 from pox.lib.packet.ipv4 import ipv4
 from pox.lib.packet.tcp import tcp
+from pox.lib.packet.arp import arp
 from pox.lib.addresses import IPAddr, EthAddr
 from pox.lib.util import dpid_to_str
 import pox.openflow.libopenflow_01 as of
@@ -41,7 +42,39 @@ class IPHashLoadBalancer(object):
         log.info("Flow installed: %s -> %s", match, actions)
 
     def handle_packet(self, packet, event):
-        log.info("Przechodzę do funkcji handle_packet. Pakiet {}".format(packet))
+        arp_packet = packet.find(arp)
+        if arp_packet:
+            if arp_packet.opcode == arp.REQUEST and arp_packet.protodst == self.vip:
+                # Jeśli jeszcze nie mamy MAC dla VIP, zapisujemy pierwszy, który zobaczymy
+                if not hasattr(self, 'vip_mac'):
+                    self.vip_mac = packet.src
+                    log.info("Zapisano MAC dla VIP: %s", self.vip_mac)
+
+                arp_reply = arp()
+                arp_reply.hwsrc = self.vip_mac
+                arp_reply.hwdst = arp_packet.hwsrc
+                arp_reply.opcode = arp.REPLY
+                arp_reply.protosrc = self.vip
+                arp_reply.protodst = arp_packet.protosrc
+
+                eth = ethernet()
+                eth.type = ethernet.ARP_TYPE
+                eth.src = self.vip_mac
+                eth.dst = arp_packet.hwsrc
+                eth.payload = arp_reply
+
+                msg = of.ofp_packet_out()
+                msg.data = eth.pack()
+                msg.actions.append(of.ofp_action_output(port=event.port))
+                self.connection.send(msg)
+
+                return
+
+        # 🔹 Filtrujemy IPv6
+        if packet.find(ipv4) is None:
+            log.info("Odrzucam pakiet nie będący IPv4: %s", type(packet))
+            return
+        
         ip_packet = packet.find(ipv4)
         tcp_packet = packet.find(tcp)
 
