@@ -64,7 +64,7 @@ def generate_traffic(host, vip):
     """
     host.cmd('iperf -s &')
 
-    time.sleep(5)
+    time.sleep(15)
 
     while True:
         traffic_duration = random.randint(1, 15)
@@ -98,10 +98,10 @@ def run():
     vip_host.cmd('ifconfig vip_host-eth0 {} netmask 255.255.255.0 up'.format(vip))
 
     # Uruchamianie generowania ruchu tylko na hostach-klientach
-    # for host in clients:
-    #     t = threading.Thread(target=generate_traffic, args=(host, vip))
-    #     t.setDaemon(True)
-    #     t.start()
+    for host in clients:
+        t = threading.Thread(target=generate_traffic, args=(host, vip))
+        t.setDaemon(True)
+        t.start()
 
     CLI(net)
     net.stop()
