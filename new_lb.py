@@ -39,7 +39,7 @@ class LoadBalancer(object):
 
         # Handle packets destined for VIP
         if ip_packet.dstip == VIP:
-            if dpid == 5:  # Switch S5
+            if dpid in (5, 6):  # Switch S5
                 self._handle_to_vip(event, ip_packet, in_port)
         elif ip_packet.srcip in SERVER_IPS:
             if dpid in (5, 6):  # Switch S5 or S6
@@ -56,12 +56,13 @@ class LoadBalancer(object):
 
         log.info(f"Switch S5: Forwarding traffic from {src_ip} to {selected_server}")
 
-        # Modify the destination IP
-        ip_packet.dstip = selected_server
-
         # Install flow for this path
         msg = of.ofp_flow_mod()
         msg.match = of.ofp_match.from_packet(ip_packet, in_port)
+
+        # Modify the destination IP
+        ip_packet.dstip = selected_server
+        
         msg.actions.append(of.ofp_action_nw_addr.set_dst(selected_server))
         msg.actions.append(of.ofp_action_output(port=2))  # Example: Forward to port 2
 
@@ -74,12 +75,13 @@ class LoadBalancer(object):
         if src_ip in SERVER_IPS:
             log.info(f"Switch S5/S6: Modifying source IP from {src_ip} to VIP {VIP}")
 
-            # Modify the source IP
-            ip_packet.srcip = VIP
-
             # Install flow for this path
             msg = of.ofp_flow_mod()
             msg.match = of.ofp_match.from_packet(ip_packet, in_port)
+
+            # Modify the source IP
+            ip_packet.srcip = VIP
+            
             msg.actions.append(of.ofp_action_nw_addr.set_src(VIP))
             msg.actions.append(of.ofp_action_output(port=1))  # Example: Forward to port 1
 
