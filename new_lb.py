@@ -10,6 +10,10 @@ import hashlib
 log = core.getLogger()
 
 VIP = IPAddr('10.0.0.100')
+H5 = IPAddr('10.0.0.5')
+H6 = IPAddr('10.0.0.6')
+H7 = IPAddr('10.0.0.7')
+H8 = IPAddr('10.0.0.8')
 SERVER_IPS = [IPAddr('10.0.0.1'), IPAddr('10.0.0.2'), IPAddr('10.0.0.3'), IPAddr('10.0.0.4')]
 
 class LoadBalancer(object):
@@ -21,6 +25,25 @@ class LoadBalancer(object):
         """ Hash function to determine server based on source and destination IPs."""
         combined = str(src_ip) + str(dst_ip)
         return int(hashlib.md5(combined.encode()).hexdigest(), 16) % len(SERVER_IPS)
+
+    def install_flow(self, event, ip_packet, in_port, selected_server, out_port, dpid):
+        # Install flow for this path
+        msg = of.ofp_flow_mod()
+        msg.match = of.ofp_match.from_packet(event.parsed, in_port)
+
+        # Modify the destination IP
+        ip_packet.dstip = selected_server
+        
+        msg.actions.append(of.ofp_action_nw_addr.set_dst(selected_server))
+        msg.actions.append(of.ofp_action_output(port=out_port))
+
+        connection = None
+        for conn in core.openflow.connections.values():
+            if conn.dpid == dpid:
+                connection = conn
+                break
+        
+        connection.send(msg)
 
     def _handle_PacketIn(self, event):
         packet = event.parsed
@@ -56,6 +79,15 @@ class LoadBalancer(object):
 
         log.info(f"Switch S5: Forwarding traffic from {src_ip} to {selected_server}")
 
+        connection_dict = {}
+    
+        for connection in core.openflow.connections.values():
+            connection_dict[connection.dpid] = connection
+
+        if src_ip == H5:
+
+        elif src_ip == H6:
+        
         # Install flow for this path
         msg = of.ofp_flow_mod()
         msg.match = of.ofp_match.from_packet(ip_packet, in_port)
