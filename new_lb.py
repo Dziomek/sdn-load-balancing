@@ -14,7 +14,13 @@ H5 = IPAddr('10.0.0.5')
 H6 = IPAddr('10.0.0.6')
 H7 = IPAddr('10.0.0.7')
 H8 = IPAddr('10.0.0.8')
-SERVER_IPS = [IPAddr('10.0.0.1'), IPAddr('10.0.0.2'), IPAddr('10.0.0.3'), IPAddr('10.0.0.4')]
+
+S1 = IPAddr('10.0.0.1')
+S2 = IPAddr('10.0.0.2')
+S3 = IPAddr('10.0.0.3')
+S4 = IPAddr('10.0.0.4')
+SERVER_IPS = [S1, S2, S3, S4]
+#SERVER_IPS = [IPAddr('10.0.0.1'), IPAddr('10.0.0.2'), IPAddr('10.0.0.3'), IPAddr('10.0.0.4')]
 
 class LoadBalancer(object):
     def __init__(self):
@@ -29,7 +35,19 @@ class LoadBalancer(object):
     def install_flow(self, event, ip_packet, in_port, selected_server, out_port, dpid):
         # Install flow for this path
         msg = of.ofp_flow_mod()
-        msg.match = of.ofp_match.from_packet(event.parsed, in_port)
+        match = of.ofp_match()
+
+        match.in_port = in_port 
+        match.dl_src = event.parsed.src  # Source MAC address
+        match.dl_dst = event.parsed.dst  # Destination MAC address
+        match.nw_src = ip_packet.srcip  # Source IP address
+        match.nw_dst = ip_packet.dstip  # Destination IP address
+        
+        transport_packet = ip_packet.payload
+        match.tp_src = transport_packet.srcport  # Source port
+        match.tp_dst = transport_packet.dstport  # Destination port
+    
+        msg.match = match
 
         # Modify the destination IP
         ip_packet.dstip = selected_server
@@ -42,8 +60,9 @@ class LoadBalancer(object):
             if conn.dpid == dpid:
                 connection = conn
                 break
-        
-        connection.send(msg)
+
+        if connection:
+            connection.send(msg)
 
     def _handle_PacketIn(self, event):
         packet = event.parsed
@@ -79,26 +98,50 @@ class LoadBalancer(object):
 
         log.info(f"Switch S5: Forwarding traffic from {src_ip} to {selected_server}")
 
-        connection_dict = {}
-    
-        for connection in core.openflow.connections.values():
-            connection_dict[connection.dpid] = connection
+        if src_ip in (H5, H6):
+            if selected_server == S1:
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 5)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 1, 2)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 1, 1)
+                
+            elif selected_server == S2:
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 5)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 1, 2)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 2, 1)
 
-        if src_ip == H5:
+            elif selected_server == S3:
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 5)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 4, 2)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 1, 3)
 
-        elif src_ip == H6:
+            elif selected_server == S4:
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 5)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 4, 2)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 2, 3)
+
+        elif src_ip in (H7, H8):
+            if selected_server == S1:
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 6)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 4, 4)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 1, 1)
+
+            elif selected_server == S2:
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 6)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 4, 4)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 2, 1)
+
+            elif selected_server == S3:
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 6)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 2, 4)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 1, 3)
+
+
+            elif selected_server == S4:
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 6)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 2, 4)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, 2, 3)
+
         
-        # Install flow for this path
-        msg = of.ofp_flow_mod()
-        msg.match = of.ofp_match.from_packet(ip_packet, in_port)
-
-        # Modify the destination IP
-        ip_packet.dstip = selected_server
-        
-        msg.actions.append(of.ofp_action_nw_addr.set_dst(selected_server))
-        msg.actions.append(of.ofp_action_output(port=2))  # Example: Forward to port 2
-
-        event.connection.send(msg)
 
     def _handle_from_server(self, event, ip_packet, in_port):
         """ Handle packets returning from servers to clients."""
