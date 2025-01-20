@@ -9,6 +9,7 @@ import hashlib
 
 log = core.getLogger()
 
+VMAC = EthAddr("12:34:56:12:34:56")
 VIP = IPAddr('10.0.0.100')
 H5 = IPAddr('10.0.0.5')
 H6 = IPAddr('10.0.0.6')
@@ -80,12 +81,13 @@ class LoadBalancer(object):
         ip_packet = packet.payload
 
         # Handle packets destined for VIP
-        if ip_packet.dstip == VIP:
-            if dpid in (5, 6):  # Switch S5
+        if ip_packet.dstip == VIP and event.parsed.dst == VMAC:
+            if dpid in (5, 6):  # Switch S5 or S6
                 self._handle_to_vip(event, ip_packet, in_port)
+                
         elif ip_packet.srcip in SERVER_IPS:
             if dpid in (5, 6):  # Switch S5 or S6
-                self._handle_from_server(event, ip_packet, in_port)
+                self._handle_from_server(event, ip_packet, in_port, dpid)
 
     def _handle_to_vip(self, event, ip_packet, in_port):
         """ Handle packets destined for the VIP."""
@@ -143,24 +145,47 @@ class LoadBalancer(object):
 
         
 
-    def _handle_from_server(self, event, ip_packet, in_port):
+    def _handle_from_server(self, event, ip_packet, in_port, dpid):
         """ Handle packets returning from servers to clients."""
         src_ip = ip_packet.srcip
+        dst_ip = ip_packet.dstip
 
-        if src_ip in SERVER_IPS:
-            log.info(f"Switch S5/S6: Modifying source IP from {src_ip} to VIP {VIP}")
+        log.info(f"Switch S5/S6: Modifying source IP from {src_ip} to VIP {VIP}")
 
-            # Install flow for this path
-            msg = of.ofp_flow_mod()
-            msg.match = of.ofp_match.from_packet(ip_packet, in_port)
+        # Install flow for this path
+        msg = of.ofp_flow_mod()
+        match = of.ofp_match()
 
-            # Modify the source IP
-            ip_packet.srcip = VIP
-            
-            msg.actions.append(of.ofp_action_nw_addr.set_src(VIP))
-            msg.actions.append(of.ofp_action_output(port=1))  # Example: Forward to port 1
+        match.in_port = in_port 
+        match.dl_src = event.parsed.src  # Source MAC address
+        match.dl_dst = event.parsed.dst  # Destination MAC address
+        match.nw_src = ip_packet.srcip  # Source IP address
+        match.nw_dst = ip_packet.dstip  # Destination IP address
+        
+        transport_packet = ip_packet.payload
+        match.tp_src = transport_packet.srcport  # Source port
+        match.tp_dst = transport_packet.dstport  # Destination port
+    
+        msg.match = match
 
-            event.connection.send(msg)
+        # Modify the source IP
+        ip_packet.srcip = VIP
+        
+        msg.actions.append(of.ofp_action_nw_addr.set_src(VIP))
+
+        if dpid == 5:
+            if dst_ip == H5:
+                msg.actions.append(of.ofp_action_output(port=1))
+            elif dst_ip == H6:
+                msg.actions.append(of.ofp_action_output(port=2))
+                
+        elif dpid == 6:
+            if dst_ip == H7:
+                msg.actions.append(of.ofp_action_output(port=1))
+            elif dst_ip == H8:
+                msg.actions.append(of.ofp_action_output(port=2))
+
+        event.connection.send(msg)
 
     def _handle_arp(self, packet, event, in_port):
         """ Handle ARP packets."""
