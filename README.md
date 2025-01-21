@@ -1,7 +1,7 @@
 # Topology
 Topology consists of 6 switches and 8 hosts. Devices are connected as follows:
 
-<img src="img/topology.png" alt="Topology Diagram" width="600">
+<img src="img/topo.JPG" alt="Topology Diagram" width="600">
 
 The script that defines and runs the topology is in the file `topology.py`.
 
