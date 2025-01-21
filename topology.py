@@ -12,14 +12,17 @@ import random
 class CustomTopo(Topo):
     def build(self):
         # hosts
-        h1 = self.addHost('h1')
-        h2 = self.addHost('h2')
-        h3 = self.addHost('h3')
-        h4 = self.addHost('h4')
-        h5 = self.addHost('h5')
-        h6 = self.addHost('h6')
-        h7 = self.addHost('h7')
-        h8 = self.addHost('h8')
+        h1 = self.addHost('h1', mac='00:00:00:00:00:01')
+        h2 = self.addHost('h2', mac='00:00:00:00:00:02')
+        h3 = self.addHost('h3', mac='00:00:00:00:00:03')
+        h4 = self.addHost('h4', mac='00:00:00:00:00:04')
+        h5 = self.addHost('h5', mac='00:00:00:00:00:05')
+        h6 = self.addHost('h6', mac='00:00:00:00:00:06')
+        h7 = self.addHost('h7', mac='00:00:00:00:00:07')
+        h8 = self.addHost('h8', mac='00:00:00:00:00:08')
+
+        # virtual host
+        h9 = self.addHost('h9', mac='00:00:00:00:00:09')
 
         # switches
         s1 = self.addSwitch('s1')
@@ -48,6 +51,9 @@ class CustomTopo(Topo):
         self.addLink(s4, s6)
         self.addLink(s1, s4)
         self.addLink(s2, s3)
+
+        # virtual connection
+        self.addLink(s2, h9)
 
 
 def generate_traffic(host, hosts):
