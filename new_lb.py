@@ -205,7 +205,7 @@ class LoadBalancer(object):
         msg.match = match
         
         msg.actions.append(of.ofp_action_nw_addr.set_src(VIP))
-        msg.actions.append(of.ofp_action_dl_addr.set_dst(VMAC))
+        msg.actions.append(of.ofp_action_dl_addr.set_src(VMAC))
 
         if dpid == 5:
             if dst_ip == H5:
