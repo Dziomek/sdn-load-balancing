@@ -9,8 +9,9 @@ import hashlib
 
 log = core.getLogger()
 
-VMAC = EthAddr("12:34:56:12:34:56")
-VIP = IPAddr('10.0.0.100')
+VMAC = EthAddr("00:00:00:00:00:09")
+VIP = IPAddr('10.0.0.9')
+
 H5 = IPAddr('10.0.0.5')
 H6 = IPAddr('10.0.0.6')
 H7 = IPAddr('10.0.0.7')
@@ -21,7 +22,12 @@ S2 = IPAddr('10.0.0.2')
 S3 = IPAddr('10.0.0.3')
 S4 = IPAddr('10.0.0.4')
 SERVER_IPS = [S1, S2, S3, S4]
-#SERVER_IPS = [IPAddr('10.0.0.1'), IPAddr('10.0.0.2'), IPAddr('10.0.0.3'), IPAddr('10.0.0.4')]
+
+S1MAC = EthAddr("00:00:00:00:00:01")
+S2MAC = EthAddr("00:00:00:00:00:02")
+S3MAC = EthAddr("00:00:00:00:00:03")
+S4MAC = EthAddr("00:00:00:00:00:04")
+SERVER_MACS = [S1MAC, S2MAC, S3MAC, S4MAC]
 
 class LoadBalancer(object):
     def __init__(self):
@@ -33,7 +39,7 @@ class LoadBalancer(object):
         combined = str(src_ip) + str(dst_ip)
         return int(hashlib.md5(combined.encode()).hexdigest(), 16) % len(SERVER_IPS)
 
-    def install_flow(self, event, ip_packet, in_port, selected_server, out_port, dpid):
+    def install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, out_port, dpid):
         # Install flow for this path
         msg = of.ofp_flow_mod()
         match = of.ofp_match()
@@ -49,11 +55,9 @@ class LoadBalancer(object):
         match.tp_dst = transport_packet.dstport  # Destination port
     
         msg.match = match
-
-        # Modify the destination IP
-        ip_packet.dstip = selected_server
         
         msg.actions.append(of.ofp_action_nw_addr.set_dst(selected_server))
+        msg.actions.append(of.ofp_action_dl_addr.set_dst(selected_mac))
         msg.actions.append(of.ofp_action_output(port=out_port))
 
         connection = None
@@ -97,51 +101,51 @@ class LoadBalancer(object):
         # Determine which server to forward to
         server_index = self._hash(src_ip, dst_ip)
         selected_server = SERVER_IPS[server_index]
+        selected_mac = SERVER_MACS[server_index]
 
         log.info(f"Switch S5: Forwarding traffic from {src_ip} to {selected_server}")
 
         if src_ip in (H5, H6):
             if selected_server == S1:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 5)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 1, 2)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 1, 1)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 5)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 1, 2)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 1, 1)
                 
             elif selected_server == S2:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 5)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 1, 2)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 2, 1)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 5)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 1, 2)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 2, 1)
 
             elif selected_server == S3:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 5)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 4, 2)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 1, 3)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 5)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 4, 2)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 1, 3)
 
             elif selected_server == S4:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 5)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 4, 2)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 2, 3)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 5)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 4, 2)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 2, 3)
 
         elif src_ip in (H7, H8):
             if selected_server == S1:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 6)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 4, 4)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 1, 1)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 6)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 4, 4)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 1, 1)
 
             elif selected_server == S2:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 6)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 4, 4)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 2, 1)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 6)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 4, 4)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 2, 1)
 
             elif selected_server == S3:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 6)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 2, 4)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 1, 3)
-
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 6)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 2, 4)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 1, 3)
 
             elif selected_server == S4:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 3, 6)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 2, 4)
-                self.install_flow(self, event, ip_packet, in_port, selected_server, 2, 3)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 6)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 2, 4)
+                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 2, 3)
 
         
 
