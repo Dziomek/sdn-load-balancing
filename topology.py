@@ -8,18 +8,23 @@ from mininet.log import setLogLevel
 from mininet.cli import CLI
 import threading
 import random
+import time
+
 
 class CustomTopo(Topo):
     def build(self):
         # hosts
-        h1 = self.addHost('h1')
-        h2 = self.addHost('h2')
-        h3 = self.addHost('h3')
-        h4 = self.addHost('h4')
-        h5 = self.addHost('h5')
-        h6 = self.addHost('h6')
-        h7 = self.addHost('h7')
-        h8 = self.addHost('h8')
+        h1 = self.addHost('h1', mac='00:00:00:00:00:01')
+        h2 = self.addHost('h2', mac='00:00:00:00:00:02')
+        h3 = self.addHost('h3', mac='00:00:00:00:00:03')
+        h4 = self.addHost('h4', mac='00:00:00:00:00:04')
+        h5 = self.addHost('h5', mac='00:00:00:00:00:05')
+        h6 = self.addHost('h6', mac='00:00:00:00:00:06')
+        h7 = self.addHost('h7', mac='00:00:00:00:00:07')
+        h8 = self.addHost('h8', mac='00:00:00:00:00:08')
+
+        # virtual host
+        h9 = self.addHost('h9', mac='00:00:00:00:00:09')
 
         # switches
         s1 = self.addSwitch('s1')
@@ -49,20 +54,17 @@ class CustomTopo(Topo):
         self.addLink(s1, s4)
         self.addLink(s2, s3)
 
+        # virtual connection
+        self.addLink(s2, h9)
 
-def generate_traffic(host, hosts):
-    hosts = [h for h in hosts if h != host]
 
-    host.cmd('iperf -s &')
-
-    time.sleep(5)
-    
+def generate_traffic(host):    
     while True:
         traffic_duration = random.randint(1, 15)
         
-        target_host = random.choice(hosts)
+        target_host = '10.0.0.9'
 
-        host.cmd('iperf -c ' + target_host.IP() + ' -t ' + str(traffic_duration) + ' &')
+        host.cmd('iperf -c ' + target_host + ' -t ' + str(traffic_duration) + ' &')
 
         time.sleep(traffic_duration)
 
@@ -73,24 +75,19 @@ def run():
     topo = CustomTopo()
     net = Mininet(topo=topo, controller=lambda name: RemoteController(name, ip='127.0.0.1', port=6633))
     net.start()
-
-    hosts = []
-    for i in range(1,9):
-        host = net.get('h' + str(i))
-        hosts.append(host)
-
-    for host in hosts:
-        t = threading.Thread(target=generate_traffic, args=(host, hosts))
-        t.setDaemon(True)
-        t.start()
     
 
-    #h2 = net.get('h2')
-    #h2.popen('iperf -s &')
+    # Uruchomienie serwerów
+    for i in range(1,5):
+        host = net.get('h' + str(i))
+        host.cmd('iperf -s &')
 
-
-    #h1 = net.get('h1')
-    #h1.popen('iperf -c {} -t 0 -i 1 &'.format(h2.IP()))
+    # Generowanie ruchu
+    for i in range(5,9):
+        host = net.get('h' + str(i))
+        t = threading.Thread(target=generate_traffic, args=(host,))
+        t.setDaemon(True)
+        t.start()
     
     CLI(net)
     net.stop()
