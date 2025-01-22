@@ -89,17 +89,25 @@ class LoadBalancer(object):
 
         transport_packet = ip_packet.payload
         if isinstance(transport_packet, tcp) or isinstance(transport_packet, udp):
+            # Sprawdzamy, czy porty odpowiadają domyślnym portom iperf (np. port 5001)
+            if transport_packet.dstport == 5001 or transport_packet.srcport == 5001:
+                # Pakiet jest związany z iperf, przechodzi dalej
+                pass
+            else:
+                return  # Jeśli port nie odpowiada, ignorujemy pakiet
+        else:
+            return  # Jeśli nie ma danych transportowych (TCP/UDP), ignorujemy pakiet
 
-            ip_packet = packet.payload
-    
-            # Handle packets destined for VIP
-            if ip_packet.dstip == VIP and event.parsed.dst == VMAC:
-                if dpid in (5, 6):  # Switch S5 or S6
-                    self._handle_to_vip(event, ip_packet, in_port)
-                    
-            elif ip_packet.srcip in SERVER_IPS:
-                if dpid in (5, 6):  # Switch S5 or S6
-                    self._handle_from_server(event, ip_packet, in_port, dpid)
+        ip_packet = packet.payload
+
+        # Handle packets destined for VIP
+        if ip_packet.dstip == VIP and event.parsed.dst == VMAC:
+            if dpid in (5, 6):  # Switch S5 or S6
+                self._handle_to_vip(event, ip_packet, in_port)
+                
+        elif ip_packet.srcip in SERVER_IPS:
+            if dpid in (5, 6):  # Switch S5 or S6
+                self._handle_from_server(event, ip_packet, in_port, dpid)
 
     def _handle_to_vip(self, event, ip_packet, in_port):
         """ Handle packets destined for the VIP."""
