@@ -47,6 +47,9 @@ class LoadBalancer(object):
 
         match.in_port = in_port 
 
+        match.dl_type = 0x0800
+        match.nw_proto = ip_packet.protocol
+
         transport_packet = ip_packet.payload
         match.tp_src = transport_packet.srcport  # Source port
         match.tp_dst = transport_packet.dstport  # Destination port
