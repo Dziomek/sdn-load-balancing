@@ -1,3 +1,5 @@
+sh ovs-ofctl dump-flows s5
+
 # Topology
 Topology consists of 6 switches and 8 hosts. Devices are connected as follows:
 
