@@ -21,12 +21,6 @@ The block diagram of this algorithm is as follows:
 
 <img src="img/algorithm-schema.png" alt="Topology Diagram" width="400">
 
-# Algorithm
-
-Load balancing algorithm is the following:
-
-<img src="img/algorithm.png" alt="Topology Diagram" width="400">
-
 ## Creating and running the topology
 
 To create and run the topology, you must have the **Mininet** environment installed.
