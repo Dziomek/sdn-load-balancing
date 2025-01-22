@@ -79,19 +79,26 @@ class LoadBalancer(object):
         #    self._handle_arp(packet, event, in_port)
         #    return
 
-        if packet.type != ethernet.IP_TYPE:
-            return
+        #if packet.type != ethernet.IP_TYPE:
+        #    return
 
-        ip_packet = packet.payload
+        ip_packet = packet.find("ipv4")
+        if ip_packet is None:
+            return  # Jeśli pakiet nie jest IPv4, kończymy
 
-        # Handle packets destined for VIP
-        if ip_packet.dstip == VIP and event.parsed.dst == VMAC:
-            if dpid in (5, 6):  # Switch S5 or S6
-                self._handle_to_vip(event, ip_packet, in_port)
-                
-        elif ip_packet.srcip in SERVER_IPS:
-            if dpid in (5, 6):  # Switch S5 or S6
-                self._handle_from_server(event, ip_packet, in_port, dpid)
+        transport_packet = ip_packet.payload
+        if isinstance(transport_packet, tcp) or isinstance(transport_packet, udp):
+
+            ip_packet = packet.payload
+    
+            # Handle packets destined for VIP
+            if ip_packet.dstip == VIP and event.parsed.dst == VMAC:
+                if dpid in (5, 6):  # Switch S5 or S6
+                    self._handle_to_vip(event, ip_packet, in_port)
+                    
+            elif ip_packet.srcip in SERVER_IPS:
+                if dpid in (5, 6):  # Switch S5 or S6
+                    self._handle_from_server(event, ip_packet, in_port, dpid)
 
     def _handle_to_vip(self, event, ip_packet, in_port):
         """ Handle packets destined for the VIP."""
