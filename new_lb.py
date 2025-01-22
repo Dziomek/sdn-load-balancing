@@ -46,14 +46,16 @@ class LoadBalancer(object):
         match = of.ofp_match()
 
         match.in_port = in_port 
-        match.dl_src = event.parsed.src  # Source MAC address
-        match.dl_dst = event.parsed.dst  # Destination MAC address
-        match.nw_src = ip_packet.srcip  # Source IP address
-        match.nw_dst = ip_packet.dstip  # Destination IP address
-        
+
         transport_packet = ip_packet.payload
         match.tp_src = transport_packet.srcport  # Source port
         match.tp_dst = transport_packet.dstport  # Destination port
+        
+        match.nw_src = ip_packet.srcip  # Source IP address
+        match.nw_dst = ip_packet.dstip  # Destination IP address
+        
+        match.dl_src = event.parsed.src  # Source MAC address
+        match.dl_dst = event.parsed.dst  # Destination MAC address
     
         msg.match = match
         
