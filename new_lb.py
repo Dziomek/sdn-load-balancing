@@ -75,9 +75,9 @@ class LoadBalancer(object):
         dpid = event.dpid
 
         # ARP handling
-        if packet.type == ethernet.ARP_TYPE:
-            self._handle_arp(packet, event, in_port)
-            return
+        #if packet.type == ethernet.ARP_TYPE:
+        #    self._handle_arp(packet, event, in_port)
+        #    return
 
         if packet.type != ethernet.IP_TYPE:
             return
@@ -103,7 +103,7 @@ class LoadBalancer(object):
         selected_server = SERVER_IPS[server_index]
         selected_mac = SERVER_MACS[server_index]
 
-        log.info(f"Switch S5: Forwarding traffic from {src_ip} to {selected_server}")
+        log.info(f"Switch S{event.dpid}: Forwarding traffic from {src_ip} to {selected_server}")
 
         if src_ip in (H5, H6):
             if selected_server == S1:
@@ -186,7 +186,7 @@ class LoadBalancer(object):
         src_ip = ip_packet.srcip
         dst_ip = ip_packet.dstip
 
-        log.info(f"Switch S5/S6: Modifying source IP from {src_ip} to VIP {VIP}")
+        log.info(f"Switch S{event.dpid}: Modifying source IP from {src_ip} to VIP {VIP}")
 
         # Install flow for this path
         msg = of.ofp_flow_mod()
