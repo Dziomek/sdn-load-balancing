@@ -4,6 +4,7 @@ from pox.lib.packet.ipv4 import ipv4
 from pox.lib.packet.ethernet import ethernet
 from pox.lib.packet.arp import arp
 from pox.lib.addresses import IPAddr, EthAddr
+from pox.lib.packet import tcp, udp
 
 import hashlib
 
