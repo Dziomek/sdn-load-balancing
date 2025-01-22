@@ -63,7 +63,7 @@ def generate_traffic(host):
         traffic_duration = random.randint(1, 15)
         
         target_host = '10.0.0.9'
-
+        print(f"Running iperf with target host: {target_host}")
         host.cmd('iperf -c ' + target_host + ' -t ' + str(traffic_duration) + ' &')
 
         time.sleep(traffic_duration)
