@@ -107,77 +107,77 @@ class LoadBalancer(object):
 
         if src_ip in (H5, H6):
             if selected_server == S1:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 5)
+                self.install_flow(event, ip_packet, in_port, selected_server, selected_mac, 3, 5)
 
                 ip_packet.dstip = selected_server
                 event.parsed.dst = selected_mac
                 
-                self.install_flow(self, event, ip_packet, 3, selected_server, selected_mac, 1, 2)
-                self.install_flow(self, event, ip_packet, 3, selected_server, selected_mac, 1, 1)
+                self.install_flow(event, ip_packet, 3, selected_server, selected_mac, 1, 2)
+                self.install_flow(event, ip_packet, 3, selected_server, selected_mac, 1, 1)
                 
             elif selected_server == S2:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 5)
+                self.install_flow(event, ip_packet, in_port, selected_server, selected_mac, 3, 5)
 
                 ip_packet.dstip = selected_server
                 event.parsed.dst = selected_mac
                 
-                self.install_flow(self, event, ip_packet, 3, selected_server, selected_mac, 1, 2)
-                self.install_flow(self, event, ip_packet, 3, selected_server, selected_mac, 2, 1)
+                self.install_flow(event, ip_packet, 3, selected_server, selected_mac, 1, 2)
+                self.install_flow(event, ip_packet, 3, selected_server, selected_mac, 2, 1)
 
             elif selected_server == S3:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 5)
+                self.install_flow(event, ip_packet, in_port, selected_server, selected_mac, 3, 5)
 
                 ip_packet.dstip = selected_server
                 event.parsed.dst = selected_mac
                 
-                self.install_flow(self, event, ip_packet, 3, selected_server, selected_mac, 4, 2)
-                self.install_flow(self, event, ip_packet, 5, selected_server, selected_mac, 1, 3)
+                self.install_flow(event, ip_packet, 3, selected_server, selected_mac, 4, 2)
+                self.install_flow(event, ip_packet, 5, selected_server, selected_mac, 1, 3)
 
             elif selected_server == S4:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 5)
+                self.install_flow(event, ip_packet, in_port, selected_server, selected_mac, 3, 5)
 
                 ip_packet.dstip = selected_server
                 event.parsed.dst = selected_mac
                 
-                self.install_flow(self, event, ip_packet, 3, selected_server, selected_mac, 4, 2)
-                self.install_flow(self, event, ip_packet, 5, selected_server, selected_mac, 2, 3)
+                self.install_flow(event, ip_packet, 3, selected_server, selected_mac, 4, 2)
+                self.install_flow(event, ip_packet, 5, selected_server, selected_mac, 2, 3)
 
         elif src_ip in (H7, H8):
             if selected_server == S1:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 6)
+                self.install_flow(event, ip_packet, in_port, selected_server, selected_mac, 3, 6)
 
                 ip_packet.dstip = selected_server
                 event.parsed.dst = selected_mac
                 
-                self.install_flow(self, event, ip_packet, 3, selected_server, selected_mac, 4, 4)
-                self.install_flow(self, event, ip_packet, 5, selected_server, selected_mac, 1, 1)
+                self.install_flow(event, ip_packet, 3, selected_server, selected_mac, 4, 4)
+                self.install_flow(event, ip_packet, 5, selected_server, selected_mac, 1, 1)
 
             elif selected_server == S2:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 6)
+                self.install_flow(event, ip_packet, in_port, selected_server, selected_mac, 3, 6)
 
                 ip_packet.dstip = selected_server
                 event.parsed.dst = selected_mac
                 
-                self.install_flow(self, event, ip_packet, 3, selected_server, selected_mac, 4, 4)
-                self.install_flow(self, event, ip_packet, 5, selected_server, selected_mac, 2, 1)
+                self.install_flow(event, ip_packet, 3, selected_server, selected_mac, 4, 4)
+                self.install_flow(event, ip_packet, 5, selected_server, selected_mac, 2, 1)
 
             elif selected_server == S3:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 6)
+                self.install_flow(event, ip_packet, in_port, selected_server, selected_mac, 3, 6)
 
                 ip_packet.dstip = selected_server
                 event.parsed.dst = selected_mac
                 
-                self.install_flow(self, event, ip_packet, 3, selected_server, selected_mac, 2, 4)
-                self.install_flow(self, event, ip_packet, 4, selected_server, selected_mac, 1, 3)
+                self.install_flow(event, ip_packet, 3, selected_server, selected_mac, 2, 4)
+                self.install_flow(event, ip_packet, 4, selected_server, selected_mac, 1, 3)
 
             elif selected_server == S4:
-                self.install_flow(self, event, ip_packet, in_port, selected_server, selected_mac, 3, 6)
+                self.install_flow(event, ip_packet, in_port, selected_server, selected_mac, 3, 6)
 
                 ip_packet.dstip = selected_server
                 event.parsed.dst = selected_mac
                 
-                self.install_flow(self, event, ip_packet, 3, selected_server, selected_mac, 2, 4)
-                self.install_flow(self, event, ip_packet, 4, selected_server, selected_mac, 2, 3)
+                self.install_flow(event, ip_packet, 3, selected_server, selected_mac, 2, 4)
+                self.install_flow(event, ip_packet, 4, selected_server, selected_mac, 2, 3)
 
         
 
