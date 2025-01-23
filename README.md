@@ -1,3 +1,7 @@
+## Presentation file
+
+Presentation file: `IP hash load balancer.pdf`
+
 # Problem description
 The aim of the project is to create a load balancer using the IP HASH algorithm in a topology consisting of servers and clients. We want the client, wanting to communicate with the server, to be connected to one of several available servers containing the same data (from the client's perspective, it does not matter to which server the query will be redirected).
 
