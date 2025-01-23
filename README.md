@@ -12,6 +12,10 @@ Actually, in the topology there is another **virtual host** that has a connectio
 
 The script that defines and runs the topology is located in the file `topology.py`.
 
+# Traffic generator
+
+In the file `topology.py` there is also script that runs Iperf client on clients and Iperf server on servers. After running the `topology.py` file, traffic generator is ran as well.
+
 # Load balancing algorithm
 During load balancing we use hashing techniques of the source IP address and source port. Based on this hash we select **one of the four servers**.
 
